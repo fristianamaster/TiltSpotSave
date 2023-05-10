@@ -26,9 +26,15 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Display;
 import android.view.Surface;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.io.File;
+import java.io.FileWriter;
 
 public class MainActivity extends AppCompatActivity
         implements SensorEventListener {
@@ -57,6 +63,13 @@ public class MainActivity extends AppCompatActivity
     private ImageView mSpotLeft;
     private ImageView mSpotRight;
 
+    // Button to save the displayed current sensor values.
+    private Button mSave;
+    // TextViews to get the text label of sensor.
+    private TextView lbTextSensorAzimuth;
+    private TextView lbTextSensorPitch;
+    private TextView lbTextSensorRoll;
+
     // System display. Need this for determining rotation.
     private Display mDisplay;
 
@@ -83,6 +96,41 @@ public class MainActivity extends AppCompatActivity
         mSpotBottom = (ImageView) findViewById(R.id.spot_bottom);
         mSpotLeft = (ImageView) findViewById(R.id.spot_left);
         mSpotRight = (ImageView) findViewById(R.id.spot_right);
+
+        // button save
+        lbTextSensorAzimuth = (TextView) findViewById(R.id.label_azimuth);
+        lbTextSensorPitch = (TextView) findViewById(R.id.label_pitch);
+        lbTextSensorRoll = (TextView) findViewById(R.id.label_roll);
+        mSave = (Button) findViewById(R.id.btn_save);
+        // when clicked then save the current displayed sensor value into *.txt file
+        // save on /data/data/<package.name>/files/text/sampleOrientation.txt
+        mSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!mTextSensorAzimuth.getText().toString().isEmpty() || !mTextSensorPitch.getText().toString().isEmpty() || !mTextSensorRoll.getText().toString().isEmpty()) {
+                    File file = new File(MainActivity.this.getFilesDir(), "text");
+                    if (!file.exists()) {
+                        file.mkdir();
+                    }
+
+                    try {
+                        File gpxfile = new File(file, "sampleOrientation");
+                        FileWriter writer = new FileWriter(gpxfile);
+                        writer.append(lbTextSensorAzimuth.getText().toString() + " " + mTextSensorAzimuth.getText().toString()
+                                + "\n" + lbTextSensorPitch.getText().toString() + " " + mTextSensorPitch.getText().toString()
+                                + "\n" + lbTextSensorRoll.getText().toString() +" " + mTextSensorRoll.getText().toString());
+                        writer.flush();
+                        writer.close();
+                        Toast.makeText(MainActivity.this, "Saved Orientation", Toast.LENGTH_LONG).show();
+
+                    } catch (Exception e) {
+
+                    }
+                }
+
+
+            }
+        });
 
         // Get accelerometer and magnetometer sensors from the sensor manager.
         // The getDefaultSensor() method returns null if the sensor

@@ -92,6 +92,27 @@ limitations under the License. -->
             app:layout_constraintTop_toBottomOf="@id/value_pitch"/>
     </android.support.constraint.ConstraintLayout>
 
+    <!--button Save-->
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/button_area"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/base_margin"
+        android:orientation="vertical"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/label_group">
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save TXT"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </android.support.constraint.ConstraintLayout>
+
     <ImageView
         android:id="@+id/spot_top"
         android:layout_width="@dimen/spot_size"
