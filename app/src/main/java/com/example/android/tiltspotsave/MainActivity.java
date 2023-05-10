@@ -24,6 +24,9 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Display;
+import android.view.Surface;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -54,6 +57,9 @@ public class MainActivity extends AppCompatActivity
     private ImageView mSpotLeft;
     private ImageView mSpotRight;
 
+    // System display. Need this for determining rotation.
+    private Display mDisplay;
+
     // Very small values for the accelerometer (on all three axes) should
     // be interpreted as 0. This value is the amount of acceptable
     // non-zero drift.
@@ -65,7 +71,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         // Lock the orientation to portrait (for now)
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+//        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         // text value
         mTextSensorAzimuth = (TextView) findViewById(R.id.value_azimuth);
@@ -87,6 +93,10 @@ public class MainActivity extends AppCompatActivity
                 Sensor.TYPE_ACCELEROMETER);
         mSensorMagnetometer = mSensorManager.getDefaultSensor(
                 Sensor.TYPE_MAGNETIC_FIELD);
+
+        // Get the display from the window manager (for rotation).
+        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+        mDisplay = wm.getDefaultDisplay();
     }
 
     /**
@@ -151,12 +161,39 @@ public class MainActivity extends AppCompatActivity
         boolean rotationOK = SensorManager.getRotationMatrix(rotationMatrix,
                 null, mAccelerometerData, mMagnetometerData);
 
+        // 2.1 Remap the matrix based on current device/activity rotation.
+        // to handle many different current orientation of device (not only portrait)
+        float[] rotationMatrixAdjusted = new float[9];
+        switch (mDisplay.getRotation()) {
+            case Surface.ROTATION_0:
+                rotationMatrixAdjusted = rotationMatrix.clone();
+                break;
+            case Surface.ROTATION_90:
+                SensorManager.remapCoordinateSystem(rotationMatrix,
+                        SensorManager.AXIS_Y, SensorManager.AXIS_MINUS_X,
+                        rotationMatrixAdjusted);
+                break;
+            case Surface.ROTATION_180:
+                SensorManager.remapCoordinateSystem(rotationMatrix,
+                        SensorManager.AXIS_MINUS_X, SensorManager.AXIS_MINUS_Y,
+                        rotationMatrixAdjusted);
+                break;
+            case Surface.ROTATION_270:
+                SensorManager.remapCoordinateSystem(rotationMatrix,
+                        SensorManager.AXIS_MINUS_Y, SensorManager.AXIS_X,
+                        rotationMatrixAdjusted);
+                break;
+        }
+
         // 3. get the orientation angles from the rotation matrix
         // Get the orientation of the device (azimuth, pitch, roll) based
         // on the rotation matrix. Output units are radians.
         float orientationValues[] = new float[3];
         if (rotationOK) {
-            SensorManager.getOrientation(rotationMatrix, orientationValues);
+//            SensorManager.getOrientation(rotationMatrix, orientationValues);
+            // use adjusted rotation matrix which has been adjusted to device current orientation
+            SensorManager.getOrientation(rotationMatrixAdjusted,
+                    orientationValues);
         }
         // get the value of azimuth, pitch, and roll from the orientationValues array.
         float azimuth = orientationValues[0];
