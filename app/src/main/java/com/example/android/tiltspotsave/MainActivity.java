@@ -37,6 +37,11 @@ public class MainActivity extends AppCompatActivity
     private Sensor mSensorAccelerometer;
     private Sensor mSensorMagnetometer;
 
+    // Current data from accelerometer & magnetometer.  The arrays hold values
+    // for X, Y, and Z.
+    private float[] mAccelerometerData = new float[3];
+    private float[] mMagnetometerData = new float[3];
+
     // TextViews to display current sensor values.
     private TextView mTextSensorAzimuth;
     private TextView mTextSensorPitch;
@@ -105,6 +110,50 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
+        // Get sensor type from the sensor event object
+        int sensorType = sensorEvent.sensor.getType();
+        // 1. Get sensor values
+        // Add tests for the accelerometer and magnetometer sensor types, and clone the event data into the appropriate member variables
+        // clone() gets a copy so the data doesn't change out from under us. Cloning those data prevents the data you're currently interested in from being changed by more recent data before you're done with it
+        switch (sensorType) {
+            case Sensor.TYPE_ACCELEROMETER:
+                mAccelerometerData = sensorEvent.values.clone();
+                break;
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                mMagnetometerData = sensorEvent.values.clone();
+                break;
+            default:
+                return;
+        }
+        // 2. generate rotation matrix
+        // Compute the rotation matrix: merges and translates the data
+        // from the accelerometer and magnetometer, in the device coordinate
+        // system, into a matrix in the world's coordinate system.
+        //
+        // The second argument is an inclination matrix, which isn't
+        // used in this example.
+        float[] rotationMatrix = new float[9];
+        boolean rotationOK = SensorManager.getRotationMatrix(rotationMatrix,
+                null, mAccelerometerData, mMagnetometerData);
+
+        // 3. get the orientation angles from the rotation matrix
+        // Get the orientation of the device (azimuth, pitch, roll) based
+        // on the rotation matrix. Output units are radians.
+        float orientationValues[] = new float[3];
+        if (rotationOK) {
+            SensorManager.getOrientation(rotationMatrix, orientationValues);
+        }
+        // get the value of azimuth, pitch, and roll from the orientationValues array.
+        float azimuth = orientationValues[0];
+        float pitch = orientationValues[1];
+        float roll = orientationValues[2];
+        // Fill in the string placeholders and set the textview text.
+        mTextSensorAzimuth.setText(getResources().getString(
+                R.string.value_format, azimuth));
+        mTextSensorPitch.setText(getResources().getString(
+                R.string.value_format, pitch));
+        mTextSensorRoll.setText(getResources().getString(
+                R.string.value_format, roll));
     }
 
     /**
