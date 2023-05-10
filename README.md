@@ -1,4 +1,4 @@
-TiltSpotSave (Solution Code)
+TiltSpotSave
 ========================
 
 TiltSpot demonstrates the use of the accelerometer and geomagnetic field

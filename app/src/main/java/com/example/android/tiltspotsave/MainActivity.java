@@ -24,6 +24,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity
@@ -47,6 +48,12 @@ public class MainActivity extends AppCompatActivity
     private TextView mTextSensorPitch;
     private TextView mTextSensorRoll;
 
+    // ImageView drawables to display spots.
+    private ImageView mSpotTop;
+    private ImageView mSpotBottom;
+    private ImageView mSpotLeft;
+    private ImageView mSpotRight;
+
     // Very small values for the accelerometer (on all three axes) should
     // be interpreted as 0. This value is the amount of acceptable
     // non-zero drift.
@@ -60,9 +67,16 @@ public class MainActivity extends AppCompatActivity
         // Lock the orientation to portrait (for now)
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
+        // text value
         mTextSensorAzimuth = (TextView) findViewById(R.id.value_azimuth);
         mTextSensorPitch = (TextView) findViewById(R.id.value_pitch);
         mTextSensorRoll = (TextView) findViewById(R.id.value_roll);
+
+        // image spot
+        mSpotTop = (ImageView) findViewById(R.id.spot_top);
+        mSpotBottom = (ImageView) findViewById(R.id.spot_bottom);
+        mSpotLeft = (ImageView) findViewById(R.id.spot_left);
+        mSpotRight = (ImageView) findViewById(R.id.spot_right);
 
         // Get accelerometer and magnetometer sensors from the sensor manager.
         // The getDefaultSensor() method returns null if the sensor
@@ -125,6 +139,7 @@ public class MainActivity extends AppCompatActivity
             default:
                 return;
         }
+
         // 2. generate rotation matrix
         // Compute the rotation matrix: merges and translates the data
         // from the accelerometer and magnetometer, in the device coordinate
@@ -147,6 +162,17 @@ public class MainActivity extends AppCompatActivity
         float azimuth = orientationValues[0];
         float pitch = orientationValues[1];
         float roll = orientationValues[2];
+
+        // Pitch and roll values that are close to but not 0 cause the
+        // animation to flash a lot. Adjust pitch and roll to 0 for very
+        // small values (as defined by VALUE_DRIFT).
+        if (Math.abs(pitch) < VALUE_DRIFT) {
+            pitch = 0;
+        }
+        if (Math.abs(roll) < VALUE_DRIFT) {
+            roll = 0;
+        }
+
         // Fill in the string placeholders and set the textview text.
         mTextSensorAzimuth.setText(getResources().getString(
                 R.string.value_format, azimuth));
@@ -154,6 +180,27 @@ public class MainActivity extends AppCompatActivity
                 R.string.value_format, pitch));
         mTextSensorRoll.setText(getResources().getString(
                 R.string.value_format, roll));
+
+        // Reset all spot values to 0. Without this animation artifacts can
+        // happen with fast tilts.
+        mSpotTop.setAlpha(0f);
+        mSpotBottom.setAlpha(0f);
+        mSpotLeft.setAlpha(0f);
+        mSpotRight.setAlpha(0f);
+
+        // Set spot color (alpha/opacity) equal to pitch/roll.
+        // this is not a precise grade (pitch/roll can be greater than 1)
+        // but it's close enough for the animation effect.
+        if (pitch > 0) {
+            mSpotBottom.setAlpha(pitch);
+        } else {
+            mSpotTop.setAlpha(Math.abs(pitch));
+        }
+        if (roll > 0) {
+            mSpotLeft.setAlpha(roll);
+        } else {
+            mSpotRight.setAlpha(Math.abs(roll));
+        }
     }
 
     /**
